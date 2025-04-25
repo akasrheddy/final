@@ -27,6 +27,7 @@ function Router() {
           <Route path="/success" component={Success} />
           <Route path="/results" component={Results} />
           <Route path="/blockchain" component={Blockchain} />
+          <Route path="/blockchain-admin" component={BlockchainAdmin} />
           <Route path="/admin" component={AdminPanel} />
           <Route path="/register" component={Register} />
           <Route component={NotFound} />

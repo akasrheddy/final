@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, AlertCircle } from "lucide-react";
-import { connectWallet, getConnectedAccount, isMetaMaskInstalled, CONTRACT_ADDRESS } from '@/lib/ethereum';
+import { connectWallet, getConnectedAccount, isMetaMaskInstalled, CONTRACT_ADDRESS } from '@/lib/ethereum-web3';
 
 export default function EthereumConnector() {
   const [account, setAccount] = useState<string | null>(null);

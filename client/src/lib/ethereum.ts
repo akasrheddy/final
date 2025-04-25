@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import * as ethers from 'ethers';
 
 // ABI for the VotingSystem contract
 // This needs to be updated with the complete ABI once you compile your contract in Remix
@@ -43,14 +43,14 @@ export async function getProvider() {
     try {
       // Request account access
       await window.ethereum.request({ method: 'eth_requestAccounts' });
-      return new ethers.providers.Web3Provider(window.ethereum);
+      return new ethers.BrowserProvider(window.ethereum);
     } catch (error) {
       console.error("User denied account access");
       throw error;
     }
   } else {
     // If no injected provider, use fallback
-    return new ethers.providers.JsonRpcProvider(SEPOLIA_RPC_URL);
+    return new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
   }
 }
 
@@ -59,7 +59,7 @@ export async function getContract(useSigner = false) {
   const provider = await getProvider();
   
   if (useSigner) {
-    const signer = provider.getSigner();
+    const signer = await provider.getSigner();
     return new ethers.Contract(CONTRACT_ADDRESS, votingSystemABI, signer);
   } else {
     return new ethers.Contract(CONTRACT_ADDRESS, votingSystemABI, provider);

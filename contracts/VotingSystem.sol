@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+pragma solidity ^0.8.17;
 
 /**
  * @title VotingSystem
- * @dev A secure blockchain-based voting system with biometric verification tracking
+ * @dev A secure blockchain-based voting system with biometric verification support
  */
-contract VotingSystem is Ownable {
-    using Counters for Counters.Counter;
+contract VotingSystem {
+    // State variables
+    address public owner;
+    bool public votingActive;
+    uint256 public votingStartTime;
+    uint256 public votingEndTime;
+    uint256 public candidateCount;
     
+    // Structs
     struct Candidate {
         uint256 id;
         string name;
@@ -27,51 +30,48 @@ contract VotingSystem is Ownable {
         bool hasBiometricVerification;
     }
     
-    // State variables
+    // Mappings
     mapping(address => Voter) public voters;
     mapping(uint256 => Candidate) public candidates;
-    mapping(string => bool) public registeredVoterIds;
-    Counters.Counter private _candidateIds;
-    Counters.Counter private _totalVotes;
-    
-    bool public votingActive;
-    uint256 public votingStartTime;
-    uint256 public votingEndTime;
     
     // Events
     event VoterRegistered(address indexed voterAddress, string voterId);
     event CandidateRegistered(uint256 indexed candidateId, string name, string party);
-    event VoteCast(address indexed voter, uint256 indexed candidateId, string voterId);
     event BiometricVerified(string voterId);
+    event VoteCast(address indexed voter, uint256 indexed candidateId, string voterId);
     event VotingStarted(uint256 startTime, uint256 endTime);
     event VotingEnded(uint256 endTime, uint256 totalVotes);
     
     // Modifiers
-    modifier onlyDuringVoting() {
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
+        _;
+    }
+    
+    modifier votingIsActive() {
         require(votingActive, "Voting is not active");
-        require(block.timestamp >= votingStartTime, "Voting has not started yet");
-        require(block.timestamp <= votingEndTime, "Voting has ended");
+        require(block.timestamp <= votingEndTime, "Voting period has ended");
         _;
     }
     
-    modifier voterNotRegistered(address _address) {
-        require(!voters[_address].isRegistered, "Voter already registered");
-        _;
-    }
-    
-    modifier candidateExists(uint256 _candidateId) {
-        require(candidates[_candidateId].isRegistered, "Candidate does not exist");
+    modifier votingNotActive() {
+        require(!votingActive, "Voting is already active");
         _;
     }
     
     // Constructor
     constructor() {
-        votingActive = false;
+        owner = msg.sender;
+        candidateCount = 0;
     }
     
     // Admin functions
-    function startVoting(uint256 _durationInMinutes) external onlyOwner {
-        require(!votingActive, "Voting is already active");
+    /**
+     * @dev Start the voting period
+     * @param _durationInMinutes Duration of voting period in minutes
+     */
+    function startVoting(uint256 _durationInMinutes) external onlyOwner votingNotActive {
+        require(_durationInMinutes > 0, "Duration must be greater than 0");
         
         votingActive = true;
         votingStartTime = block.timestamp;
@@ -80,33 +80,53 @@ contract VotingSystem is Ownable {
         emit VotingStarted(votingStartTime, votingEndTime);
     }
     
+    /**
+     * @dev End the voting period
+     */
     function endVoting() external onlyOwner {
         require(votingActive, "Voting is not active");
         
         votingActive = false;
         votingEndTime = block.timestamp;
         
-        emit VotingEnded(votingEndTime, _totalVotes.current());
+        uint256 totalVotes = 0;
+        for (uint256 i = 1; i <= candidateCount; i++) {
+            totalVotes += candidates[i].voteCount;
+        }
+        
+        emit VotingEnded(votingEndTime, totalVotes);
     }
     
+    /**
+     * @dev Register a new candidate
+     * @param _name Name of the candidate
+     * @param _party Political party of the candidate
+     */
     function registerCandidate(string memory _name, string memory _party) external onlyOwner {
-        _candidateIds.increment();
-        uint256 candidateId = _candidateIds.current();
+        require(bytes(_name).length > 0, "Name cannot be empty");
+        require(bytes(_party).length > 0, "Party cannot be empty");
         
-        candidates[candidateId] = Candidate({
-            id: candidateId,
+        candidateCount++;
+        candidates[candidateCount] = Candidate({
+            id: candidateCount,
             name: _name,
             party: _party,
             voteCount: 0,
             isRegistered: true
         });
         
-        emit CandidateRegistered(candidateId, _name, _party);
+        emit CandidateRegistered(candidateCount, _name, _party);
     }
     
-    // Voter registration
-    function registerVoter(address _voterAddress, string memory _voterId) external onlyOwner voterNotRegistered(_voterAddress) {
-        require(!registeredVoterIds[_voterId], "Voter ID already registered");
+    /**
+     * @dev Register a new voter
+     * @param _voterAddress Ethereum address of the voter
+     * @param _voterId Unique identifier for the voter
+     */
+    function registerVoter(address _voterAddress, string memory _voterId) external onlyOwner {
+        require(_voterAddress != address(0), "Invalid voter address");
+        require(bytes(_voterId).length > 0, "Voter ID cannot be empty");
+        require(!voters[_voterAddress].isRegistered, "Voter already registered");
         
         voters[_voterAddress] = Voter({
             voterId: _voterId,
@@ -116,12 +136,13 @@ contract VotingSystem is Ownable {
             hasBiometricVerification: false
         });
         
-        registeredVoterIds[_voterId] = true;
-        
         emit VoterRegistered(_voterAddress, _voterId);
     }
     
-    // Biometric verification
+    /**
+     * @dev Set biometric verification status for a voter
+     * @param _voterAddress Ethereum address of the voter
+     */
     function setBiometricVerification(address _voterAddress) external onlyOwner {
         require(voters[_voterAddress].isRegistered, "Voter not registered");
         require(!voters[_voterAddress].hasBiometricVerification, "Biometric already verified");
@@ -131,30 +152,31 @@ contract VotingSystem is Ownable {
         emit BiometricVerified(voters[_voterAddress].voterId);
     }
     
-    // Voting function
-    function castVote(uint256 _candidateId) external onlyDuringVoting candidateExists(_candidateId) {
-        require(voters[msg.sender].isRegistered, "Voter not registered");
-        require(!voters[msg.sender].hasVoted, "Voter has already voted");
+    // Voter functions
+    /**
+     * @dev Cast a vote for a candidate
+     * @param _candidateId ID of the candidate
+     */
+    function castVote(uint256 _candidateId) external votingIsActive {
+        require(voters[msg.sender].isRegistered, "You are not registered to vote");
         require(voters[msg.sender].hasBiometricVerification, "Biometric verification required");
+        require(!voters[msg.sender].hasVoted, "You have already voted");
+        require(_candidateId > 0 && _candidateId <= candidateCount, "Invalid candidate ID");
+        require(candidates[_candidateId].isRegistered, "Candidate not registered");
         
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].candidateId = _candidateId;
-        
         candidates[_candidateId].voteCount++;
-        _totalVotes.increment();
         
         emit VoteCast(msg.sender, _candidateId, voters[msg.sender].voterId);
     }
     
     // View functions
-    function getCandidateCount() external view returns (uint256) {
-        return _candidateIds.current();
-    }
-    
-    function getTotalVotes() external view returns (uint256) {
-        return _totalVotes.current();
-    }
-    
+    /**
+     * @dev Get the current status of a voter
+     * @param _voterAddress Ethereum address of the voter
+     * @return isRegistered, hasBiometricVerification, hasVoted, votedFor
+     */
     function getVoterStatus(address _voterAddress) external view returns (
         bool isRegistered,
         bool hasBiometricVerification,
@@ -170,6 +192,10 @@ contract VotingSystem is Ownable {
         );
     }
     
+    /**
+     * @dev Get the current voting status
+     * @return isActive, startTime, endTime, remainingTime
+     */
     function getVotingStatus() external view returns (
         bool isActive,
         uint256 startTime,
@@ -189,24 +215,46 @@ contract VotingSystem is Ownable {
         );
     }
     
+    /**
+     * @dev Get the current total number of candidates
+     * @return The number of registered candidates
+     */
+    function getCandidateCount() external view returns (uint256) {
+        return candidateCount;
+    }
+    
+    /**
+     * @dev Get the total number of votes cast
+     * @return The total vote count
+     */
+    function getTotalVotes() external view returns (uint256) {
+        uint256 totalVotes = 0;
+        for (uint256 i = 1; i <= candidateCount; i++) {
+            totalVotes += candidates[i].voteCount;
+        }
+        return totalVotes;
+    }
+    
+    /**
+     * @dev Get the current election results
+     * @return candidateIds, names, parties, voteCounts
+     */
     function getElectionResults() external view returns (
         uint256[] memory candidateIds,
         string[] memory names,
         string[] memory parties,
         uint256[] memory voteCounts
     ) {
-        uint256 candidateCount = _candidateIds.current();
         candidateIds = new uint256[](candidateCount);
         names = new string[](candidateCount);
         parties = new string[](candidateCount);
         voteCounts = new uint256[](candidateCount);
         
         for (uint256 i = 1; i <= candidateCount; i++) {
-            Candidate memory candidate = candidates[i];
-            candidateIds[i-1] = candidate.id;
-            names[i-1] = candidate.name;
-            parties[i-1] = candidate.party;
-            voteCounts[i-1] = candidate.voteCount;
+            candidateIds[i-1] = candidates[i].id;
+            names[i-1] = candidates[i].name;
+            parties[i-1] = candidates[i].party;
+            voteCounts[i-1] = candidates[i].voteCount;
         }
         
         return (candidateIds, names, parties, voteCounts);

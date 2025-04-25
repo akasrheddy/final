@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Vote, Check, Clock, X } from "lucide-react";
-import { getConnectedAccount, getVoterStatus, castVote, getVotingStatus } from '@/lib/ethereum';
+import { getConnectedAccount, getVoterStatus, castVote, getVotingStatus } from '@/lib/ethereum-web3';
 import EthereumConnector from './ethereum-connector';
 
 interface Candidate {

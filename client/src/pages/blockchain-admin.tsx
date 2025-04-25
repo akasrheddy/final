@@ -18,7 +18,7 @@ import {
   registerCandidate, 
   registerVoter, 
   setBiometricVerification 
-} from '@/lib/ethereum';
+} from '@/lib/ethereum-web3';
 import EthereumConnector from '@/components/ethereum-connector';
 
 export default function BlockchainAdmin() {
