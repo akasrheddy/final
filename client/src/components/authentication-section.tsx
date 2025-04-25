@@ -26,13 +26,14 @@ type FormValues = z.infer<typeof formSchema>;
 export default function AuthenticationSection({ onVerificationSuccess }: AuthenticationSectionProps) {
   const [scannerStatus, setScannerStatus] = useState("Ready to scan");
   const [isScanning, setIsScanning] = useState(false);
+  const [helpText, setHelpText] = useState("Enter voter ID format: V00001, V00002, or V00003");
   const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      voterId: "",
-      phone: ""
+      voterId: "V00001",  // Prefill with a valid voter ID for testing
+      phone: "1234567890"
     }
   });
   
@@ -180,6 +181,7 @@ export default function AuthenticationSection({ onVerificationSuccess }: Authent
                                 {...field} 
                               />
                             </FormControl>
+                            <p className="text-xs text-muted-foreground mt-1">{helpText}</p>
                             <FormMessage />
                           </FormItem>
                         )}

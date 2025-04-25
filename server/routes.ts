@@ -266,6 +266,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(vote.userId);
       const candidate = await storage.getCandidateById(vote.candidateId);
       
+      if (!block || !user || !candidate) {
+        return res.status(404).json({ message: "Related data not found" });
+      }
+      
       res.json({
         id: vote.transactionId,
         blockNumber: block.index,
@@ -291,6 +295,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the related block
       const block = await storage.getBlockById(vote.blockId);
+      
+      if (!block) {
+        return res.status(404).json({ message: "Block not found", verified: false });
+      }
       
       // Verify the block is in the blockchain
       const allBlocks = await storage.getAllBlocks();
