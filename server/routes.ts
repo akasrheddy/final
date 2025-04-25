@@ -216,7 +216,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!latestBlock) {
         // Initialize blockchain with genesis block
         const genesisBlock = generateGenesisBlock();
-        await storage.addBlock(genesisBlock);
+        // Convert timestamp to proper Date for storage
+        const genesisForStorage = {
+          ...genesisBlock,
+          timestamp: genesisBlock.timestamp instanceof Date ? genesisBlock.timestamp : new Date(genesisBlock.timestamp)
+        };
+        await storage.addBlock(genesisForStorage);
         newBlock = addBlock(genesisBlock, voteData);
       } else {
         newBlock = addBlock(latestBlock, voteData);
