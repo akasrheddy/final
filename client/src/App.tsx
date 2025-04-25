@@ -13,6 +13,7 @@ import Results from "@/pages/results";
 import Blockchain from "@/pages/blockchain";
 import AdminPanel from "@/pages/admin";
 import Register from "@/pages/register";
+import BlockchainAdmin from "@/pages/blockchain-admin";
 
 function Router() {
   return (
