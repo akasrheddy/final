@@ -201,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Verify fingerprint and get ID
-        const fingerprintId = await verifyFingerprintAndGetId();
+        const fingerprintId = await verifyFingerprintAndGetId(voterID);
         
         if (fingerprintId === null) {
           return res.status(401).json({ 

@@ -192,7 +192,7 @@ export async function registerFingerprintAndGetId(userId: number): Promise<numbe
 }
 
 // Verify a fingerprint and get the matching ID
-export async function verifyFingerprintAndGetId(): Promise<number | null> {
+export async function verifyFingerprintAndGetId(voterID?: string): Promise<number | null> {
   if (process.env.USE_REAL_ARDUINO === "true") {
     return new Promise((resolve, reject) => {
       // Register handler for the verification response
@@ -234,6 +234,12 @@ export async function verifyFingerprintAndGetId(): Promise<number | null> {
     // For simulation, we'll match based on the voterId
     // This makes it easier to test with different user accounts
     try {
+      // If no voterID is provided, return the default fingerprint ID
+      if (!voterID) {
+        console.log("No voter ID provided, using default fingerprint ID");
+        return 1;
+      }
+      
       // Get the user associated with the voter ID
       const user = await storage.getUserByVoterId(voterID);
       if (!user) {
