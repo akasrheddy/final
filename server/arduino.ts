@@ -102,20 +102,31 @@ export async function getArduinoStatus(): Promise<{
   isSensorConnected: boolean;
   sensorMessage: string;
 }> {
-  if (process.env.USE_REAL_ARDUINO === "true" && serialPort && serialPort.isOpen) {
-    return {
-      isConnected: true,
-      message: `Connected on port ${ARDUINO_PORT}`,
-      isSensorConnected,
-      sensorMessage
-    };
+  if (process.env.USE_REAL_ARDUINO === "true") {
+    if (serialPort && serialPort.isOpen) {
+      return {
+        isConnected: true,
+        message: `R307 connected on port ${ARDUINO_PORT}`,
+        isSensorConnected,
+        sensorMessage: isSensorConnected 
+          ? "R307 fingerprint sensor READY - place finger on sensor" 
+          : "R307 sensor not detected - check wiring"
+      };
+    } else {
+      return {
+        isConnected: false,
+        message: `Unable to connect to Arduino on port ${ARDUINO_PORT}`,
+        isSensorConnected: false,
+        sensorMessage: "Fingerprint sensor unavailable - check device connection"
+      };
+    }
   } else {
     // Return simulated status
     return {
       isConnected: true,
-      message: "Simulated Arduino connection",
+      message: "SIMULATION MODE - no hardware required",
       isSensorConnected: true,
-      sensorMessage: "Simulated sensor connected"
+      sensorMessage: "SIMULATION MODE ACTIVE - place finger on the sensor graphic"
     };
   }
 }
