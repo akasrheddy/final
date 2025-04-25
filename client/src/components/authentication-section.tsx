@@ -26,7 +26,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function AuthenticationSection({ onVerificationSuccess }: AuthenticationSectionProps) {
   const [scannerStatus, setScannerStatus] = useState("Ready to scan");
   const [isScanning, setIsScanning] = useState(false);
-  const [helpText, setHelpText] = useState("Enter voter ID format: V00001, V00002, or V00003");
+  const [helpText, setHelpText] = useState("Enter your Voter ID and place your registered finger on the scanner");
   const { toast } = useToast();
   
   const form = useForm<FormValues>({
