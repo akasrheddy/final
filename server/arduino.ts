@@ -231,11 +231,30 @@ export async function verifyFingerprintAndGetId(): Promise<number | null> {
     // Simulate a verification
     console.log("Simulating fingerprint verification");
     
-    // For simulation, let's say we match the first fingerprint
-    // In a real app, we'd have a mock map of userIds to fingerprintIds
-    const fingerprintId = 1;
-    
-    return fingerprintId;
+    // For simulation, we'll match based on the voterId
+    // This makes it easier to test with different user accounts
+    try {
+      // Get the user associated with the voter ID
+      const user = await storage.getUserByVoterId(voterID);
+      if (!user) {
+        console.log(`No user found with voter ID: ${voterID}`);
+        return null;
+      }
+      
+      // Get the fingerprint ID associated with this user
+      const fingerprintId = await storage.getFingerprintByUserId(user.id);
+      if (fingerprintId === null) {
+        console.log(`No fingerprint found for user with ID: ${user.id}`);
+        return null;
+      }
+      
+      console.log(`Simulated fingerprint match for user ${user.id} with fingerprint ID ${fingerprintId}`);
+      return fingerprintId;
+    } catch (error) {
+      console.error("Error in simulated fingerprint verification:", error);
+      // Default fallback - return fingerprint ID 1 if we can't find a match
+      return 1;
+    }
   }
 }
 
