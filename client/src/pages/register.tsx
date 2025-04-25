@@ -87,18 +87,55 @@ export default function Register() {
     }
   };
   
-  // Register fingerprint
+  const [currentStep, setCurrentStep] = useState<string>("");
+  const [errorCode, setErrorCode] = useState<string>("");
+
+  // Register fingerprint with real-time status updates
   const handleFingerprintRegistration = async () => {
     if (!registeredVoter) return;
     
+    setIsScanning(true);
+    setScanStatus("Initializing fingerprint scanner...");
+    setCurrentStep("");
+    setErrorCode("");
+    
     try {
-      setIsScanning(true);
-      setScanStatus("Place your finger on the scanner...");
-      
-      const result = await registerFingerprint(registeredVoter.voterId);
+      // Call registerFingerprint with a callback for real-time status updates
+      const result = await registerFingerprint(
+        registeredVoter.voterId,
+        (step, message, error) => {
+          console.log(`Fingerprint registration step: ${step}, message: ${message}`);
+          
+          // Update UI based on current step
+          setCurrentStep(step);
+          setErrorCode(error || "");
+          
+          switch(step) {
+            case "PLACE_FINGER":
+              setScanStatus("Place your finger on the scanner");
+              break;
+            case "IMAGE_TAKEN":
+              setScanStatus("Image captured successfully");
+              break;
+            case "REMOVE_FINGER":
+              setScanStatus("Please remove your finger from the scanner");
+              break;
+            case "PLACE_AGAIN":
+              setScanStatus("Place the SAME finger on the scanner again");
+              break;
+            case "SUCCESS":
+              setScanStatus("Fingerprint registered successfully!");
+              setIsScanning(false);
+              break;
+            case "ERROR":
+              setScanStatus(`Error: ${message}`);
+              setIsScanning(false);
+              break;
+          }
+        }
+      );
       
       if (result.success) {
-        setScanStatus("Fingerprint registered successfully!");
         toast({
           title: 'Registration Complete',
           description: 'Your fingerprint has been registered successfully.',
@@ -112,7 +149,6 @@ export default function Register() {
           navigate('/');
         }, 3000);
       } else {
-        setScanStatus("Failed to register fingerprint. Please try again.");
         toast({
           title: 'Fingerprint Registration Failed',
           description: result.message,
@@ -121,12 +157,12 @@ export default function Register() {
       }
     } catch (error) {
       setScanStatus("An error occurred. Please try again.");
+      setCurrentStep("ERROR");
       toast({
         title: 'Error',
         description: 'An error occurred while registering the fingerprint.',
         variant: 'destructive',
       });
-    } finally {
       setIsScanning(false);
     }
   };
@@ -259,7 +295,12 @@ export default function Register() {
                 </Alert>
                 
                 <div className="my-8">
-                  <FingerprintScanner status={scanStatus} isScanning={isScanning} />
+                  <FingerprintScanner 
+                    status={scanStatus} 
+                    isScanning={isScanning} 
+                    step={currentStep}
+                    errorCode={errorCode}
+                  />
                 </div>
                 
                 {!isScanning && (

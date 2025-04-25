@@ -183,7 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           statusCode: "SUCCESS",
           fingerprintId
         });
-      } catch (enrollError) {
+      } catch (error) {
+        const enrollError = error as Error;
         console.error("Error during fingerprint enrollment:", enrollError);
         
         // Provide specific error codes for the frontend to handle
@@ -289,7 +290,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Fingerprint verified successfully", 
           verified: true 
         });
-      } catch (verifyError) {
+      } catch (error) {
+        const verifyError = error as Error;
         console.error("Error verifying fingerprint:", verifyError);
         return res.status(500).json({ 
           success: false, 
