@@ -232,7 +232,7 @@ export async function registerFingerprintAndGetId(userId: number): Promise<numbe
 export async function verifyFingerprintAndGetId(voterID?: string): Promise<number | null> {
   // If simulation mode is enabled, always use the simulation approach
   if (process.env.ENABLE_SIMULATION === "true") {
-    console.log("SIMULATION MODE: Verifying fingerprint");
+    console.log("SIMULATION MODE: Verifying fingerprint for voter ID:", voterID);
     
     try {
       // If no voterID is provided, return a default fingerprint ID for simulation
@@ -248,19 +248,31 @@ export async function verifyFingerprintAndGetId(voterID?: string): Promise<numbe
         return null;
       }
       
-      // Get the fingerprint ID associated with this user
-      const fingerprintId = await storage.getFingerprintByUserId(user.id);
-      if (fingerprintId === null) {
-        console.log(`SIMULATION MODE: No fingerprint found for user with ID: ${user.id}`);
+      // In simulation mode, if the user has fingerprint flag set, 
+      // we'll automatically return a valid fingerprint ID even if it's not in the database yet
+      if (user.hasFingerprint) {
+        // Try to get existing fingerprint ID
+        const fingerprintId = await storage.getFingerprintByUserId(user.id);
+        
+        if (fingerprintId !== null) {
+          console.log(`SIMULATION MODE: Found existing fingerprint with ID ${fingerprintId} for user ${user.id}`);
+          return fingerprintId;
+        } else {
+          // For simulation mode, we'll create a fingerprint entry if it doesn't exist
+          console.log(`SIMULATION MODE: Creating simulated fingerprint for user ${user.id}`);
+          const nextId = await storage.getNextAvailableFingerprintId();
+          await storage.registerFingerprint(user.id, nextId);
+          console.log(`SIMULATION MODE: Registered fingerprint with ID ${nextId} for user ${user.id}`);
+          return nextId;
+        }
+      } else {
+        console.log(`SIMULATION MODE: User ${user.id} doesn't have fingerprint registered (hasFingerprint=false)`);
         return null;
       }
-      
-      console.log(`SIMULATION MODE: Fingerprint match for user ${user.id} with fingerprint ID ${fingerprintId}`);
-      return fingerprintId;
     } catch (error) {
       console.error("SIMULATION MODE: Error in fingerprint verification:", error);
-      // Default fallback for simulation errors
-      return 1;
+      // Log the error but don't use a fallback - return null for failure
+      return null;
     }
   }
   

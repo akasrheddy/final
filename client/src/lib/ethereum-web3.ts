@@ -1,474 +1,474 @@
 // Simple ethereum interface file - using web3.js which is more stable with our setup
 import Web3 from 'web3';
 
-// ABI for the VotingSystem contract - generated from VotingSystem.sol
+// ABI for the VotingSystem contract - provided from the deployed contract
 const votingSystemABI = [
-  {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "voterId",
-        "type": "string"
-      }
-    ],
-    "name": "BiometricVerified",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "candidateId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "party",
-        "type": "string"
-      }
-    ],
-    "name": "CandidateRegistered",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "candidateId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "voterId",
-        "type": "string"
-      }
-    ],
-    "name": "VoteCast",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "voterAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "voterId",
-        "type": "string"
-      }
-    ],
-    "name": "VoterRegistered",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalVotes",
-        "type": "uint256"
-      }
-    ],
-    "name": "VotingEnded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "startTime",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "VotingStarted",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "candidates",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "party",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "voteCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "isRegistered",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "candidateCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_candidateId",
-        "type": "uint256"
-      }
-    ],
-    "name": "castVote",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "endVoting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getCandidateCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getElectionResults",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "candidateIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "names",
-        "type": "string[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "parties",
-        "type": "string[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "voteCounts",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getTotalVotes",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_voterAddress",
-        "type": "address"
-      }
-    ],
-    "name": "getVoterStatus",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "isRegistered",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "hasBiometricVerification",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "hasVoted",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "votedFor",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getVotingStatus",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "isActive",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "startTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "remainingTime",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_party",
-        "type": "string"
-      }
-    ],
-    "name": "registerCandidate",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_voterAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "_voterId",
-        "type": "string"
-      }
-    ],
-    "name": "registerVoter",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_voterAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setBiometricVerification",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_durationInMinutes",
-        "type": "uint256"
-      }
-    ],
-    "name": "startVoting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "votingActive",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "votingEndTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "votingStartTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "voters",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "voterId",
-        "type": "string"
-      },
-      {
-        "internalType": "bool",
-        "name": "hasVoted",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "candidateId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "isRegistered",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "hasBiometricVerification",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
+        {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": false,
+                                "internalType": "string",
+                                "name": "voterId",
+                                "type": "string"
+                        }
+                ],
+                "name": "BiometricVerified",
+                "type": "event"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": true,
+                                "internalType": "uint256",
+                                "name": "candidateId",
+                                "type": "uint256"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "string",
+                                "name": "name",
+                                "type": "string"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "string",
+                                "name": "party",
+                                "type": "string"
+                        }
+                ],
+                "name": "CandidateRegistered",
+                "type": "event"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "_candidateId",
+                                "type": "uint256"
+                        }
+                ],
+                "name": "castVote",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "endVoting",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "string",
+                                "name": "_name",
+                                "type": "string"
+                        },
+                        {
+                                "internalType": "string",
+                                "name": "_party",
+                                "type": "string"
+                        }
+                ],
+                "name": "registerCandidate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "address",
+                                "name": "_voterAddress",
+                                "type": "address"
+                        },
+                        {
+                                "internalType": "string",
+                                "name": "_voterId",
+                                "type": "string"
+                        }
+                ],
+                "name": "registerVoter",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "address",
+                                "name": "_voterAddress",
+                                "type": "address"
+                        }
+                ],
+                "name": "setBiometricVerification",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "_durationInMinutes",
+                                "type": "uint256"
+                        }
+                ],
+                "name": "startVoting",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": true,
+                                "internalType": "address",
+                                "name": "voter",
+                                "type": "address"
+                        },
+                        {
+                                "indexed": true,
+                                "internalType": "uint256",
+                                "name": "candidateId",
+                                "type": "uint256"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "string",
+                                "name": "voterId",
+                                "type": "string"
+                        }
+                ],
+                "name": "VoteCast",
+                "type": "event"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": true,
+                                "internalType": "address",
+                                "name": "voterAddress",
+                                "type": "address"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "string",
+                                "name": "voterId",
+                                "type": "string"
+                        }
+                ],
+                "name": "VoterRegistered",
+                "type": "event"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "endTime",
+                                "type": "uint256"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "totalVotes",
+                                "type": "uint256"
+                        }
+                ],
+                "name": "VotingEnded",
+                "type": "event"
+        },
+        {
+                "anonymous": false,
+                "inputs": [
+                        {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "startTime",
+                                "type": "uint256"
+                        },
+                        {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "endTime",
+                                "type": "uint256"
+                        }
+                ],
+                "name": "VotingStarted",
+                "type": "event"
+        },
+        {
+                "inputs": [],
+                "name": "candidateCount",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "name": "candidates",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "id",
+                                "type": "uint256"
+                        },
+                        {
+                                "internalType": "string",
+                                "name": "name",
+                                "type": "string"
+                        },
+                        {
+                                "internalType": "string",
+                                "name": "party",
+                                "type": "string"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "voteCount",
+                                "type": "uint256"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "isRegistered",
+                                "type": "bool"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "getCandidateCount",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "getElectionResults",
+                "outputs": [
+                        {
+                                "internalType": "uint256[]",
+                                "name": "candidateIds",
+                                "type": "uint256[]"
+                        },
+                        {
+                                "internalType": "string[]",
+                                "name": "names",
+                                "type": "string[]"
+                        },
+                        {
+                                "internalType": "string[]",
+                                "name": "parties",
+                                "type": "string[]"
+                        },
+                        {
+                                "internalType": "uint256[]",
+                                "name": "voteCounts",
+                                "type": "uint256[]"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "getTotalVotes",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "address",
+                                "name": "_voterAddress",
+                                "type": "address"
+                        }
+                ],
+                "name": "getVoterStatus",
+                "outputs": [
+                        {
+                                "internalType": "bool",
+                                "name": "isRegistered",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "hasBiometricVerification",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "hasVoted",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "votedFor",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "getVotingStatus",
+                "outputs": [
+                        {
+                                "internalType": "bool",
+                                "name": "isActive",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "startTime",
+                                "type": "uint256"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "endTime",
+                                "type": "uint256"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "remainingTime",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [
+                        {
+                                "internalType": "address",
+                                "name": "",
+                                "type": "address"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [
+                        {
+                                "internalType": "address",
+                                "name": "",
+                                "type": "address"
+                        }
+                ],
+                "name": "voters",
+                "outputs": [
+                        {
+                                "internalType": "string",
+                                "name": "voterId",
+                                "type": "string"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "hasVoted",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "uint256",
+                                "name": "candidateId",
+                                "type": "uint256"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "isRegistered",
+                                "type": "bool"
+                        },
+                        {
+                                "internalType": "bool",
+                                "name": "hasBiometricVerification",
+                                "type": "bool"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "votingActive",
+                "outputs": [
+                        {
+                                "internalType": "bool",
+                                "name": "",
+                                "type": "bool"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "votingEndTime",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        },
+        {
+                "inputs": [],
+                "name": "votingStartTime",
+                "outputs": [
+                        {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                        }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+        }
 ];
 
 // Configuration - using environment variables
@@ -607,41 +607,41 @@ export async function subscribeToEvents(callback: (event: any) => void) {
   const web3 = getWeb3();
   const contract = getContract();
   
-  // Set up event listeners
-  contract.events.VoterRegistered({}, (error: Error, event: any) => {
-    if (error) {
-      console.error("Error on VoterRegistered event:", error);
-      return;
-    }
+  // Set up event listeners with proper Web3.js syntax
+  const voterSubscription = contract.events.VoterRegistered();
+  voterSubscription.on('data', (event: any) => {
     callback({
       type: "VoterRegistered",
       voterAddress: event.returnValues.voterAddress,
       voterId: event.returnValues.voterId
     });
   });
+  voterSubscription.on('error', (error: Error) => {
+    console.error("Error on VoterRegistered event:", error);
+  });
   
-  contract.events.BiometricVerified({}, (error: Error, event: any) => {
-    if (error) {
-      console.error("Error on BiometricVerified event:", error);
-      return;
-    }
+  const biometricSubscription = contract.events.BiometricVerified();
+  biometricSubscription.on('data', (event: any) => {
     callback({
       type: "BiometricVerified",
       voterId: event.returnValues.voterId
     });
   });
+  biometricSubscription.on('error', (error: Error) => {
+    console.error("Error on BiometricVerified event:", error);
+  });
   
-  contract.events.VoteCast({}, (error: Error, event: any) => {
-    if (error) {
-      console.error("Error on VoteCast event:", error);
-      return;
-    }
+  const voteSubscription = contract.events.VoteCast();
+  voteSubscription.on('data', (event: any) => {
     callback({
       type: "VoteCast",
       voter: event.returnValues.voter,
       candidateId: Number(event.returnValues.candidateId),
       voterId: event.returnValues.voterId
     });
+  });
+  voteSubscription.on('error', (error: Error) => {
+    console.error("Error on VoteCast event:", error);
   });
   
   // Return unsubscribe function
