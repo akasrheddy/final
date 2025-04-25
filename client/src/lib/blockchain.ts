@@ -2,7 +2,7 @@ import { apiRequest } from "./queryClient";
 
 export interface Block {
   index: number;
-  timestamp: number;
+  timestamp: string | number;
   data: any;
   previousHash: string;
   hash: string;

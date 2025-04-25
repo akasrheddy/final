@@ -2,7 +2,7 @@ import * as crypto from "crypto";
 
 export interface Block {
   index: number;
-  timestamp: Date;
+  timestamp: Date | string;
   data: any;
   previousHash: string;
   hash: string;
@@ -10,10 +10,11 @@ export interface Block {
 }
 
 // Calculate hash for a block
-function calculateHash(index: number, previousHash: string, timestamp: Date, data: any, nonce: number): string {
+function calculateHash(index: number, previousHash: string, timestamp: Date | string, data: any, nonce: number): string {
+  const time = timestamp instanceof Date ? timestamp.getTime() : new Date(timestamp).getTime();
   return crypto
     .createHash("sha256")
-    .update(index + previousHash + timestamp.getTime() + JSON.stringify(data) + nonce)
+    .update(index + previousHash + time + JSON.stringify(data) + nonce)
     .digest("hex");
 }
 

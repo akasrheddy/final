@@ -229,7 +229,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save block to database
-      const savedBlock = await storage.addBlock(newBlock);
+      // Convert timestamp to proper Date object if it's a string
+      const blockForStorage = {
+        ...newBlock,
+        timestamp: newBlock.timestamp instanceof Date ? newBlock.timestamp : new Date(newBlock.timestamp)
+      };
+      const savedBlock = await storage.addBlock(blockForStorage);
       
       // Record vote in database
       const transactionId = `0x${newBlock.hash.substring(0, 10)}`;
