@@ -9,9 +9,14 @@ import {
   User,
   Candidate,
   Block,
-  Vote
+  Vote,
+  InsertUser,
+  InsertCandidate,
+  insertUserSchema,
+  insertCandidateSchema
 } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { z } from "zod";
 
 // Users (Voters)
 async function getUserById(id: number): Promise<User | undefined> {
@@ -38,6 +43,37 @@ async function getTotalVoters(): Promise<number> {
   return result[0]?.count || 0;
 }
 
+async function getAllUsers(): Promise<User[]> {
+  return await db.select().from(users);
+}
+
+async function getUserByUsername(username: string): Promise<User | undefined> {
+  const result = await db.select().from(users).where(eq(users.username, username));
+  return result[0];
+}
+
+async function createUser(userData: {
+  username: string;
+  voterId: string;
+  password: string;
+  phone: string | null;
+  hasFingerprint: boolean;
+  hasVoted: boolean;
+}): Promise<User> {
+  const result = await db
+    .insert(users)
+    .values({
+      username: userData.username,
+      password: userData.password,
+      voterId: userData.voterId,
+      phone: userData.phone,
+      hasFingerprint: userData.hasFingerprint,
+      hasVoted: userData.hasVoted
+    })
+    .returning();
+  return result[0];
+}
+
 // Candidates
 async function getAllCandidates(): Promise<Candidate[]> {
   return await db.select().from(candidates);
@@ -45,6 +81,24 @@ async function getAllCandidates(): Promise<Candidate[]> {
 
 async function getCandidateById(id: number): Promise<Candidate | undefined> {
   const result = await db.select().from(candidates).where(eq(candidates.id, id));
+  return result[0];
+}
+
+async function createCandidate(candidateData: {
+  name: string;
+  party: string;
+  description: string;
+  imageUrl: string | null;
+}): Promise<Candidate> {
+  const result = await db
+    .insert(candidates)
+    .values({
+      name: candidateData.name,
+      party: candidateData.party,
+      description: candidateData.description,
+      imageUrl: candidateData.imageUrl
+    })
+    .returning();
   return result[0];
 }
 
@@ -210,10 +264,14 @@ export const storage = {
   getUserByVoterId,
   updateUserVotingStatus,
   getTotalVoters,
+  getAllUsers,
+  getUserByUsername,
+  createUser,
   
   // Candidates
   getAllCandidates,
   getCandidateById,
+  createCandidate,
   
   // Fingerprints
   registerFingerprint,

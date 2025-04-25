@@ -214,6 +214,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching candidates" });
     }
   });
+  
+  // Admin: Get all voters
+  app.get(`${apiPrefix}/admin/voters`, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      // Don't expose password hashes
+      const safeUsers = allUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        voterId: user.voterId,
+        hasFingerprint: user.hasFingerprint,
+        hasVoted: user.hasVoted,
+        createdAt: user.createdAt
+      }));
+      
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error getting voters:", error);
+      res.status(500).json({ message: "Error fetching voters" });
+    }
+  });
+  
+  // Admin: Add new voter
+  app.post(`${apiPrefix}/admin/voters`, async (req, res) => {
+    try {
+      const { username, voterId, password, phone } = req.body;
+      
+      // Check if voter ID already exists
+      const existingUser = await storage.getUserByVoterId(voterId);
+      if (existingUser) {
+        return res.status(409).json({ message: "Voter ID already exists" });
+      }
+      
+      // Check if username already exists
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      // Create new user
+      const newUser = await storage.createUser({
+        username,
+        voterId,
+        password, // Note: In a real app, you would hash this password
+        phone: phone || null,
+        hasFingerprint: false,
+        hasVoted: false
+      });
+      
+      res.status(201).json({
+        id: newUser.id,
+        username: newUser.username,
+        voterId: newUser.voterId
+      });
+    } catch (error) {
+      console.error("Error creating voter:", error);
+      res.status(500).json({ message: "Error creating voter" });
+    }
+  });
+  
+  // Admin: Add new candidate
+  app.post(`${apiPrefix}/admin/candidates`, async (req, res) => {
+    try {
+      const { name, party, description, imageUrl } = req.body;
+      
+      // Create new candidate
+      const newCandidate = await storage.createCandidate({
+        name,
+        party,
+        description,
+        imageUrl: imageUrl || null
+      });
+      
+      res.status(201).json(newCandidate);
+    } catch (error) {
+      console.error("Error creating candidate:", error);
+      res.status(500).json({ message: "Error creating candidate" });
+    }
+  });
 
   // Cast vote
   app.post(`${apiPrefix}/votes`, async (req, res) => {
