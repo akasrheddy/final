@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import FingerprintScanner from "./fingerprint-scanner";
 import SystemStatus from "./system-status";
-import { registerFingerprint, verifyFingerprint } from "@/lib/arduino";
+import { verifyFingerprint } from "@/lib/arduino";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthenticationSectionProps {
@@ -95,59 +95,7 @@ export default function AuthenticationSection({ onVerificationSuccess }: Authent
     }
   };
   
-  const onRegister = async () => {
-    const voterId = form.getValues("voterId");
-    if (!voterId) {
-      form.setError("voterId", { message: "Voter ID is required" });
-      return;
-    }
-    
-    // Start the scanning animation
-    setIsScanning(true);
-    setScannerStatus("Scanning...");
-    
-    try {
-      // Simulate fingerprint registration
-      setTimeout(async () => {
-        try {
-          const response = await registerFingerprint(voterId);
-          
-          if (response.success) {
-            setIsScanning(false);
-            setScannerStatus("Fingerprint registered!");
-            toast({
-              title: "Registration Successful",
-              description: "Your fingerprint has been registered.",
-            });
-          } else {
-            setIsScanning(false);
-            setScannerStatus("Registration failed. Try again.");
-            toast({
-              title: "Registration Failed",
-              description: response.message || "Please try again.",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          setIsScanning(false);
-          setScannerStatus("Error registering fingerprint");
-          toast({
-            title: "Registration Error",
-            description: "Failed to register fingerprint. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, 2000);
-    } catch (error) {
-      setIsScanning(false);
-      setScannerStatus("Error registering fingerprint");
-      toast({
-        title: "Registration Error",
-        description: "Failed to register fingerprint. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+
   
   return (
     <section id="authentication-section" className="mb-10">
@@ -207,19 +155,12 @@ export default function AuthenticationSection({ onVerificationSuccess }: Authent
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button 
-                      type="button"
-                      onClick={onRegister}
-                      className="bg-accent hover:bg-amber-600 text-white font-semibold"
-                    >
-                      Register Fingerprint
-                    </Button>
+                  <div className="flex justify-end">
                     <Button 
                       type="submit"
-                      className="bg-primary hover:bg-blue-700 text-white font-semibold"
+                      className="bg-primary hover:bg-blue-700 text-white font-semibold w-full"
                     >
-                      Verify & Proceed
+                      Verify with Fingerprint
                     </Button>
                   </div>
                 </div>
