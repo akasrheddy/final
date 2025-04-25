@@ -133,25 +133,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { voterID } = req.body;
       
       if (!voterID) {
-        return res.status(400).json({ success: false, message: "Voter ID is required" });
+        return res.status(400).json({ 
+          success: false, 
+          message: "Voter ID is required",
+          statusCode: "VOTER_ID_REQUIRED"
+        });
       }
       
       // Check if voter exists
       const user = await storage.getUserByVoterId(voterID);
       
       if (!user) {
-        return res.status(404).json({ success: false, message: "Voter not found" });
+        return res.status(404).json({ 
+          success: false, 
+          message: "Voter not found",
+          statusCode: "VOTER_NOT_FOUND"
+        });
       }
       
       if (user.hasFingerprint) {
-        return res.status(409).json({ success: false, message: "Fingerprint already registered for this voter" });
+        return res.status(409).json({ 
+          success: false, 
+          message: "Fingerprint already registered for this voter",
+          statusCode: "FINGERPRINT_ALREADY_REGISTERED" 
+        });
       }
       
       // Request fingerprint enrollment from Arduino
       const arduinoStatus = await getArduinoStatus();
       
       if (!arduinoStatus.isConnected) {
-        return res.status(503).json({ success: false, message: "Arduino is not connected" });
+        return res.status(503).json({ 
+          success: false, 
+          message: "Arduino is not connected",
+          statusCode: "ARDUINO_NOT_CONNECTED" 
+        });
       }
       
       try {
@@ -163,18 +179,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.json({ 
           success: true, 
-          message: "Fingerprint registered successfully with ID: " + fingerprintId
+          message: "Fingerprint registered successfully with ID: " + fingerprintId,
+          statusCode: "SUCCESS",
+          fingerprintId
         });
       } catch (enrollError) {
         console.error("Error during fingerprint enrollment:", enrollError);
+        
+        // Provide specific error codes for the frontend to handle
+        let statusCode = "ENROLLMENT_ERROR";
+        let userMessage = enrollError.message;
+        
+        // Parse the error message for known error types
+        if (enrollError.message.includes("ERROR_TEMPLATE2")) {
+          statusCode = "TEMPLATE2_ERROR";
+          userMessage = "The second fingerprint scan didn't match the first. Please try again with consistent finger placement.";
+        } else if (enrollError.message.includes("ERROR_IMAGING")) {
+          statusCode = "IMAGING_ERROR";
+          userMessage = "Could not capture a clear fingerprint image. Please ensure your finger is clean and properly placed on the sensor.";
+        } else if (enrollError.message.includes("ERROR_TEMPLATE")) {
+          statusCode = "TEMPLATE_ERROR";
+          userMessage = "Could not process the fingerprint. Please try again with a different finger position.";
+        }
+        
         return res.status(500).json({ 
           success: false, 
-          message: "Error during fingerprint enrollment: " + enrollError.message 
+          message: userMessage,
+          statusCode,
+          originalError: enrollError.message
         });
       }
     } catch (error) {
       console.error("Error registering fingerprint:", error);
-      res.status(500).json({ success: false, message: "Error registering fingerprint" });
+      res.status(500).json({ 
+        success: false, 
+        message: "Error registering fingerprint",
+        statusCode: "SERVER_ERROR"
+      });
     }
   });
 

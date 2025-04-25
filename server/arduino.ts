@@ -210,9 +210,36 @@ export async function registerFingerprintAndGetId(userId: number): Promise<numbe
           } else if (response.includes("ERROR")) {
             console.error(`Fingerprint registration error: ${response}`);
             
+            // Detailed error logging based on specific error codes
+            if (response.includes("ERROR_TEMPLATE2")) {
+              console.error("DEBUG: Second fingerprint image failed to convert to template.");
+              console.error("CAUSE: This typically happens when the finger is placed differently on the second attempt.");
+              console.error("SUGGESTION: Try placing your finger in the exact same position as the first time.");
+            } else if (response.includes("ERROR_IMAGING")) {
+              console.error("DEBUG: Failed to capture fingerprint image.");
+              console.error("CAUSE: Poor finger placement or dirty sensor surface.");
+              console.error("SUGGESTION: Clean the sensor and ensure finger covers the entire surface.");
+            } else if (response.includes("ERROR_TEMPLATE")) {
+              console.error("DEBUG: Failed to convert first fingerprint image to template.");
+              console.error("CAUSE: Poor image quality or insufficient fingerprint features detected.");
+              console.error("SUGGESTION: Ensure finger is clean and press firmly but gently on the sensor.");
+            }
+            
             // Remove the handler once done
             arduinoResponseHandlers.delete("ENROLL");
-            reject(new Error(`Enrollment failed: ${response}`));
+            
+            // Provide a more user-friendly error message
+            const errorMessage = response.includes("ERROR_TEMPLATE2") 
+              ? "Enrollment failed: The second fingerprint scan didn't match the first. Please try again with consistent finger placement."
+              : `Enrollment failed: ${response}`;
+            
+            reject(new Error(errorMessage));
+          } else if (response.includes("PLACE_FINGER")) {
+            console.log("Waiting for user to place finger on sensor");
+          } else if (response.includes("REMOVE_FINGER")) {
+            console.log("Waiting for user to remove finger from sensor");
+          } else if (response.includes("PLACE_AGAIN")) {
+            console.log("Waiting for user to place finger on sensor for second scan");
           }
         });
         
