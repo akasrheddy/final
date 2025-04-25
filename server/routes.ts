@@ -2,7 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { Block, generateGenesisBlock, addBlock, isChainValid } from "./blockchain";
-import { setupArduinoConnection, getArduinoStatus, disconnectArduino } from "./arduino";
+import { 
+  setupArduinoConnection, 
+  getArduinoStatus, 
+  disconnectArduino,
+  registerFingerprintAndGetId,
+  verifyFingerprintAndGetId
+} from "./arduino";
 import { eq } from "drizzle-orm";
 import * as crypto from "crypto";
 
@@ -137,19 +143,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(503).json({ success: false, message: "Arduino is not connected" });
       }
       
-      // In a real implementation, we would:
-      // 1. Send a command to Arduino to start fingerprint enrollment
-      // 2. Wait for Arduino to capture the fingerprint
-      // 3. Store the fingerprint template in the database
-      
-      // For this implementation, we'll simulate success
-      const templateData = "SIMULATED_FINGERPRINT_TEMPLATE_" + Date.now();
-      await storage.registerFingerprint(user.id, templateData);
-      
-      res.json({ 
-        success: true, 
-        message: "Fingerprint registered successfully" 
-      });
+      try {
+        // Get a fingerprint ID from the Arduino
+        const fingerprintId = await registerFingerprintAndGetId(user.id);
+        
+        // Store the fingerprint ID in the database
+        await storage.registerFingerprint(user.id, fingerprintId);
+        
+        res.json({ 
+          success: true, 
+          message: "Fingerprint registered successfully with ID: " + fingerprintId
+        });
+      } catch (enrollError) {
+        console.error("Error during fingerprint enrollment:", enrollError);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error during fingerprint enrollment: " + enrollError.message 
+        });
+      }
     } catch (error) {
       console.error("Error registering fingerprint:", error);
       res.status(500).json({ success: false, message: "Error registering fingerprint" });
@@ -188,19 +199,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(503).json({ success: false, message: "Arduino is not connected", verified: false });
       }
       
-      // In a real implementation, we would:
-      // 1. Send a command to Arduino to start fingerprint verification
-      // 2. Wait for Arduino to capture and verify the fingerprint
-      
-      // For this implementation, we'll simulate success
-      res.json({ 
-        success: true, 
-        message: "Fingerprint verified successfully", 
-        verified: true 
-      });
+      try {
+        // Verify fingerprint and get ID
+        const fingerprintId = await verifyFingerprintAndGetId();
+        
+        if (fingerprintId === null) {
+          return res.status(401).json({ 
+            success: false, 
+            message: "Fingerprint doesn't match any registered print", 
+            verified: false 
+          });
+        }
+        
+        // Get the user associated with this fingerprint
+        const fingerprintUser = await storage.getUserByFingerprintId(fingerprintId);
+        
+        if (!fingerprintUser) {
+          return res.status(404).json({ 
+            success: false, 
+            message: "No user found with this fingerprint", 
+            verified: false 
+          });
+        }
+        
+        // Verify that the fingerprint belongs to the claimed voter
+        if (fingerprintUser.voterId !== voterID) {
+          return res.status(401).json({ 
+            success: false, 
+            message: "Fingerprint doesn't match the provided voter ID", 
+            verified: false 
+          });
+        }
+        
+        // Authentication successful
+        res.json({ 
+          success: true, 
+          message: "Fingerprint verified successfully", 
+          verified: true 
+        });
+      } catch (verifyError) {
+        console.error("Error verifying fingerprint:", verifyError);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error during fingerprint verification: " + verifyError.message, 
+          verified: false 
+        });
+      }
     } catch (error) {
       console.error("Error verifying fingerprint:", error);
-      res.status(500).json({ success: false, message: "Error verifying fingerprint", verified: false });
+      res.status(500).json({ 
+        success: false, 
+        message: "Error verifying fingerprint", 
+        verified: false 
+      });
     }
   });
 

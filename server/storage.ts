@@ -105,16 +105,57 @@ async function createCandidate(candidateData: {
 }
 
 // Fingerprints
-async function registerFingerprint(userId: number, templateData: string): Promise<void> {
+async function getNextAvailableFingerprintId(): Promise<number> {
+  // Query the database for the highest fingerprint ID currently in use
+  const result = await db.select({
+    maxId: sql<number>`COALESCE(MAX(${fingerprints.fingerprintId}), 0)`
+  }).from(fingerprints);
+  
+  // Return next available ID (current max + 1), starting from 1
+  return (result[0]?.maxId || 0) + 1;
+}
+
+async function getFingerprintByUserId(userId: number): Promise<number | null> {
+  const result = await db
+    .select()
+    .from(fingerprints)
+    .where(eq(fingerprints.userId, userId));
+  
+  return result[0]?.fingerprintId || null;
+}
+
+async function getUserByFingerprintId(fingerprintId: number): Promise<User | undefined> {
+  // First get the fingerprint record that matches the ID
+  const fingerprintResult = await db
+    .select()
+    .from(fingerprints)
+    .where(eq(fingerprints.fingerprintId, fingerprintId));
+  
+  if (fingerprintResult.length === 0) {
+    return undefined;
+  }
+  
+  // Then get the associated user
+  return await getUserById(fingerprintResult[0].userId);
+}
+
+async function registerFingerprint(userId: number, fingerprintId: number): Promise<void> {
   // Begin a transaction
   await db.transaction(async (tx) => {
-    // Insert the fingerprint template
+    // Insert the fingerprint record with the ID from Arduino
     await tx
       .insert(fingerprints)
-      .values({ userId, templateData })
+      .values({ 
+        userId, 
+        fingerprintId,
+        templateData: `ID:${fingerprintId}` // Store the ID as template data for backward compatibility
+      })
       .onConflictDoUpdate({
         target: fingerprints.userId,
-        set: { templateData }
+        set: { 
+          fingerprintId, 
+          templateData: `ID:${fingerprintId}`
+        }
       });
     
     // Update the user's fingerprint status
@@ -277,6 +318,9 @@ export const storage = {
   
   // Fingerprints
   registerFingerprint,
+  getNextAvailableFingerprintId,
+  getFingerprintByUserId,
+  getUserByFingerprintId,
   
   // Blockchain
   getLatestBlock,
