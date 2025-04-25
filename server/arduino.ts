@@ -84,15 +84,19 @@ function handleArduinoResponse(message: string) {
   }
   
   // Check if there are any registered handlers for this message prefix
-  for (const [prefix, handler] of arduinoResponseHandlers.entries()) {
+  // Convert Map entries to array to avoid TypeScript downlevelIteration issues
+  let handled = false;
+  Array.from(arduinoResponseHandlers.entries()).forEach(([prefix, handler]) => {
     if (message.startsWith(prefix)) {
       handler(message);
-      return;
+      handled = true;
     }
-  }
+  });
   
   // Unknown response
-  console.log("Unhandled Arduino message:", message);
+  if (!handled) {
+    console.log("Unhandled Arduino message:", message);
+  }
 }
 
 // Get the current status of the Arduino and fingerprint sensor

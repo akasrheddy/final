@@ -61,13 +61,37 @@ export default function FingerprintScanner({ status, isScanning, step, errorCode
     return "";
   };
   
+  // Get scanner CSS classes based on current state
+  const getScannerClasses = () => {
+    let classes = "fingerprint-scanner mb-4 relative";
+    
+    if (step === "PLACE_FINGER" || step === "PLACE_AGAIN") {
+      classes += " place-finger";
+    }
+    
+    if (step === "SUCCESS") {
+      classes += " success";
+    }
+    
+    if (step === "ERROR") {
+      classes += " error";
+    }
+    
+    return classes;
+  };
+  
   return (
     <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-background">
-      <div className="fingerprint-scanner mb-4 relative" id="fingerprint-scanner">
-        <div className={`scanning ${isScanning ? 'block' : 'hidden'}`}></div>
+      <div className={getScannerClasses()} id="fingerprint-scanner">
+        <div className={`scanning ${isScanning ? '' : 'hidden'}`}></div>
         {step === "REMOVE_FINGER" && (
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
             <span className="text-amber-500 text-xs font-bold animate-pulse">Remove now</span>
+          </div>
+        )}
+        {step === "PLACE_AGAIN" && (
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+            <span className="text-primary text-xs font-bold">Place again</span>
           </div>
         )}
       </div>

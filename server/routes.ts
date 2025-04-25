@@ -291,11 +291,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           verified: true 
         });
       } catch (error) {
-        const verifyError = error as Error;
-        console.error("Error verifying fingerprint:", verifyError);
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : "Unknown error during fingerprint verification";
+        
+        console.error("Error verifying fingerprint:", errorMessage);
         return res.status(500).json({ 
           success: false, 
-          message: "Error during fingerprint verification: " + verifyError.message, 
+          message: "Error during fingerprint verification: " + errorMessage, 
           verified: false 
         });
       }
