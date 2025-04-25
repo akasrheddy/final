@@ -39,6 +39,9 @@ export default function Header() {
           <Link href="/blockchain" className="hover:text-accent transition">
             Blockchain
           </Link>
+          <Link href="/admin" className="hover:text-accent transition border-l border-white/20 pl-6">
+            Admin
+          </Link>
         </nav>
         
         <div className="text-white text-sm">

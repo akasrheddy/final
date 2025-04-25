@@ -25,6 +25,7 @@ function Router() {
           <Route path="/success" component={Success} />
           <Route path="/results" component={Results} />
           <Route path="/blockchain" component={Blockchain} />
+          <Route path="/admin" component={AdminPanel} />
           <Route component={NotFound} />
         </Switch>
       </div>
