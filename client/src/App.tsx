@@ -12,6 +12,7 @@ import Success from "@/pages/success";
 import Results from "@/pages/results";
 import Blockchain from "@/pages/blockchain";
 import AdminPanel from "@/pages/admin";
+import Register from "@/pages/register";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
           <Route path="/results" component={Results} />
           <Route path="/blockchain" component={Blockchain} />
           <Route path="/admin" component={AdminPanel} />
+          <Route path="/register" component={Register} />
           <Route component={NotFound} />
         </Switch>
       </div>

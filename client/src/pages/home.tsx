@@ -36,7 +36,15 @@ export default function Home() {
 
   return (
     <main className="container mx-auto px-4 py-6">
-      <div className="mb-8 flex justify-end">
+      <div className="mb-8 flex justify-between">
+        <Button 
+          variant="default" 
+          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+          onClick={() => navigate('/register')}
+        >
+          Register as Voter
+        </Button>
+        
         <Button 
           variant="outline" 
           className="bg-primary/10 hover:bg-primary/20" 
