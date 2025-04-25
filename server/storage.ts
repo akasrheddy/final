@@ -60,16 +60,18 @@ async function createUser(userData: {
   hasFingerprint: boolean;
   hasVoted: boolean;
 }): Promise<User> {
+  const values = {
+    username: userData.username,
+    password: userData.password,
+    voterId: userData.voterId,
+    phone: userData.phone,
+    hasFingerprint: userData.hasFingerprint || false,
+    hasVoted: userData.hasVoted || false
+  };
+  
   const result = await db
     .insert(users)
-    .values({
-      username: userData.username,
-      password: userData.password,
-      voterId: userData.voterId,
-      phone: userData.phone,
-      hasFingerprint: userData.hasFingerprint,
-      hasVoted: userData.hasVoted
-    })
+    .values(values)
     .returning();
   return result[0];
 }
@@ -253,7 +255,7 @@ async function getArduinoStatus(): Promise<{ isConnected: boolean; message: stri
   }
   
   return {
-    isConnected: result[0].isConnected,
+    isConnected: result[0].isConnected === null ? false : result[0].isConnected,
     message: result[0].message || ""
   };
 }

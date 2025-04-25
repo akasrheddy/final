@@ -11,6 +11,7 @@ import Processing from "@/pages/processing";
 import Success from "@/pages/success";
 import Results from "@/pages/results";
 import Blockchain from "@/pages/blockchain";
+import AdminPanel from "@/pages/admin";
 
 function Router() {
   return (

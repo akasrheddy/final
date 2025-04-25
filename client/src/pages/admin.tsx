@@ -3,6 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+// Define types for our data
+interface Candidate {
+  id: number;
+  name: string;
+  party: string;
+  description: string;
+  imageUrl?: string;
+}
+
+interface Voter {
+  id: number;
+  username: string;
+  voterId: string;
+  hasFingerprint: boolean;
+  hasVoted: boolean;
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -34,12 +51,12 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("candidates");
 
   // Fetch candidates
-  const { data: candidates, isLoading: isLoadingCandidates, refetch: refetchCandidates } = useQuery({
+  const { data: candidates = [] as Candidate[], isLoading: isLoadingCandidates, refetch: refetchCandidates } = useQuery<Candidate[]>({
     queryKey: ['/api/candidates'],
   });
 
   // Fetch voters
-  const { data: voters, isLoading: isLoadingVoters, refetch: refetchVoters } = useQuery({
+  const { data: voters = [] as Voter[], isLoading: isLoadingVoters, refetch: refetchVoters } = useQuery<Voter[]>({
     queryKey: ['/api/admin/voters'],
   });
 
@@ -212,7 +229,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {candidates.map((candidate: any) => (
+                      {candidates.map((candidate: Candidate) => (
                         <TableRow key={candidate.id}>
                           <TableCell>{candidate.id}</TableCell>
                           <TableCell>{candidate.name}</TableCell>
@@ -324,7 +341,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {voters.map((voter: any) => (
+                      {voters.map((voter: Voter) => (
                         <TableRow key={voter.id}>
                           <TableCell>{voter.id}</TableCell>
                           <TableCell>{voter.username}</TableCell>
