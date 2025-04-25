@@ -102,6 +102,17 @@ export async function getArduinoStatus(): Promise<{
   isSensorConnected: boolean;
   sensorMessage: string;
 }> {
+  // First check if we're using simulation mode regardless of real hardware setting
+  if (process.env.ENABLE_SIMULATION === "true") {
+    return {
+      isConnected: true,
+      message: "SIMULATION MODE - no hardware required",
+      isSensorConnected: true,
+      sensorMessage: "SIMULATION MODE ACTIVE - place finger on the sensor graphic"
+    };
+  }
+  
+  // If we're trying to use real hardware
   if (process.env.USE_REAL_ARDUINO === "true") {
     if (serialPort && serialPort.isOpen) {
       return {
@@ -121,10 +132,10 @@ export async function getArduinoStatus(): Promise<{
       };
     }
   } else {
-    // Return simulated status
+    // Fallback simulation status when hardware mode is disabled
     return {
       isConnected: true,
-      message: "SIMULATION MODE - no hardware required",
+      message: "SIMULATION MODE - hardware mode disabled",
       isSensorConnected: true,
       sensorMessage: "SIMULATION MODE ACTIVE - place finger on the sensor graphic"
     };
@@ -133,6 +144,13 @@ export async function getArduinoStatus(): Promise<{
 
 // Send a command to the Arduino
 export async function sendArduinoCommand(command: string): Promise<boolean> {
+  // If simulation mode is enabled, always simulate commands
+  if (process.env.ENABLE_SIMULATION === "true") {
+    console.log(`SIMULATION MODE: Arduino command '${command}'`);
+    return true;
+  }
+  
+  // Only attempt to communicate with real hardware if it's enabled and connected
   if (process.env.USE_REAL_ARDUINO === "true" && serialPort && serialPort.isOpen) {
     try {
       serialPort.write(`${command}\n`);
@@ -142,7 +160,7 @@ export async function sendArduinoCommand(command: string): Promise<boolean> {
       return false;
     }
   } else {
-    // Simulate Arduino communication
+    // Fallback to simulation if real hardware is enabled but not connected
     console.log(`Simulating Arduino command: ${command}`);
     return true;
   }
@@ -160,6 +178,15 @@ export async function disconnectArduino(): Promise<void> {
 
 // Register a fingerprint and get a fingerprint ID
 export async function registerFingerprintAndGetId(userId: number): Promise<number> {
+  // If simulation mode is enabled, always use the simulation approach
+  if (process.env.ENABLE_SIMULATION === "true") {
+    console.log("SIMULATION MODE: Registering fingerprint");
+    const nextId = await storage.getNextAvailableFingerprintId();
+    console.log(`SIMULATION MODE: Registered fingerprint with ID ${nextId}`);
+    return nextId;
+  }
+  
+  // If using real hardware
   if (process.env.USE_REAL_ARDUINO === "true") {
     return new Promise((resolve, reject) => {
       // Find next available ID
@@ -194,9 +221,8 @@ export async function registerFingerprintAndGetId(userId: number): Promise<numbe
       });
     });
   } else {
-    // Simulate a fingerprint registration
-    console.log("Simulating fingerprint registration");
-    // Get the next available ID from storage
+    // Fallback simulation
+    console.log("Simulating fingerprint registration (hardware mode disabled)");
     const nextId = await storage.getNextAvailableFingerprintId();
     return nextId;
   }
@@ -204,6 +230,41 @@ export async function registerFingerprintAndGetId(userId: number): Promise<numbe
 
 // Verify a fingerprint and get the matching ID
 export async function verifyFingerprintAndGetId(voterID?: string): Promise<number | null> {
+  // If simulation mode is enabled, always use the simulation approach
+  if (process.env.ENABLE_SIMULATION === "true") {
+    console.log("SIMULATION MODE: Verifying fingerprint");
+    
+    try {
+      // If no voterID is provided, return a default fingerprint ID for simulation
+      if (!voterID) {
+        console.log("SIMULATION MODE: No voter ID provided, using default fingerprint ID");
+        return 1;
+      }
+      
+      // Get the user associated with the voter ID
+      const user = await storage.getUserByVoterId(voterID);
+      if (!user) {
+        console.log(`SIMULATION MODE: No user found with voter ID: ${voterID}`);
+        return null;
+      }
+      
+      // Get the fingerprint ID associated with this user
+      const fingerprintId = await storage.getFingerprintByUserId(user.id);
+      if (fingerprintId === null) {
+        console.log(`SIMULATION MODE: No fingerprint found for user with ID: ${user.id}`);
+        return null;
+      }
+      
+      console.log(`SIMULATION MODE: Fingerprint match for user ${user.id} with fingerprint ID ${fingerprintId}`);
+      return fingerprintId;
+    } catch (error) {
+      console.error("SIMULATION MODE: Error in fingerprint verification:", error);
+      // Default fallback for simulation errors
+      return 1;
+    }
+  }
+  
+  // If using real hardware
   if (process.env.USE_REAL_ARDUINO === "true") {
     return new Promise((resolve, reject) => {
       // Register handler for the verification response
@@ -239,11 +300,9 @@ export async function verifyFingerprintAndGetId(voterID?: string): Promise<numbe
       sendArduinoCommand("VERIFY");
     });
   } else {
-    // Simulate a verification
-    console.log("Simulating fingerprint verification");
+    // Fallback simulation when hardware is disabled
+    console.log("Simulating fingerprint verification (hardware mode disabled)");
     
-    // For simulation, we'll match based on the voterId
-    // This makes it easier to test with different user accounts
     try {
       // If no voterID is provided, return the default fingerprint ID
       if (!voterID) {

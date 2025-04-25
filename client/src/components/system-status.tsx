@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 export default function SystemStatus() {
-  const { data: status, isLoading, error } = useQuery({
+  const { data: status, isLoading, error } = useQuery<SystemStatusType>({
     queryKey: ['/api/status'],
     refetchInterval: 3000, // Refetch every 3 seconds for more real-time updates
   });
