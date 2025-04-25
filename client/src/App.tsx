@@ -10,6 +10,7 @@ import Voting from "@/pages/voting";
 import Processing from "@/pages/processing";
 import Success from "@/pages/success";
 import Results from "@/pages/results";
+import Blockchain from "@/pages/blockchain";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/processing" component={Processing} />
           <Route path="/success" component={Success} />
           <Route path="/results" component={Results} />
+          <Route path="/blockchain" component={Blockchain} />
           <Route component={NotFound} />
         </Switch>
       </div>
