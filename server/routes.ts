@@ -23,10 +23,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/blockchain/status`, async (req, res) => {
     try {
       const latestBlock = await storage.getLatestBlock();
+      const totalVotes = await storage.getTotalVotes();
+      const candidates = await storage.getAllCandidates();
+      
+      // Get blockchain data from database for now - in a real-world implementation
+      // this would connect to the actual smart contract
       res.json({
         active: true,
         blockCount: latestBlock ? latestBlock.index + 1 : 0,
         latestHash: latestBlock ? latestBlock.hash : null,
+        smartContract: {
+          votingActive: true,
+          totalVotes: totalVotes,
+          candidateCount: candidates.length,
+          contractAddress: process.env.CONTRACT_ADDRESS || "0x123...abc" // Smart contract address (placeholder)
+        }
       });
     } catch (error) {
       console.error("Error getting blockchain status:", error);
