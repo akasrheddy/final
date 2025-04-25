@@ -9,73 +9,90 @@ const BAUD_RATE = 9600;
 let serialPort: SerialPort | null = null;
 let isSensorConnected = false;
 let sensorMessage = "Not initialized";
+let arduinoResponseHandlers: Map<string, (response: string) => void> = new Map();
 
 // Connect to Arduino
 export async function setupArduinoConnection(): Promise<void> {
   try {
-    // Always use simulated Arduino connection in Replit environment
-    // This is necessary because we can't connect to physical hardware in a cloud environment
-    console.log("Simulating Arduino connection for Replit environment");
-    await storage.updateArduinoStatus(true, "Simulated Arduino connection");
-    isSensorConnected = true;
-    sensorMessage = "Simulated sensor connected";
+    // Attempt to use a real Arduino connection if available
+    console.log("Checking for Arduino connection...");
     
-    // In a real-world scenario with physical Arduino connected,
-    // you would use the code below to establish a serial connection
-    
-    /*
-    // List available ports
-    const { SerialPort } = await import("serialport");
-    const ports = await SerialPort.list();
-    console.log("Available ports:", ports);
-    
-    // Try to connect to Arduino
-    serialPort = new SerialPort({
-      path: ARDUINO_PORT,
-      baudRate: BAUD_RATE
-    });
-    
-    // Setup event handlers
-    serialPort.on("open", async () => {
-      console.log("Arduino connected on port:", ARDUINO_PORT);
-      await storage.updateArduinoStatus(true, `Connected on port ${ARDUINO_PORT}`);
+    if (process.env.USE_REAL_ARDUINO === "true") {
+      console.log("Attempting to connect to real Arduino");
+      // List available ports
+      const ports = await SerialPort.list();
+      console.log("Available ports:", ports);
       
-      // Send initial command to check if fingerprint sensor is connected
-      serialPort?.write("CHECK_SENSOR\n");
-    });
-    
-    serialPort.on("data", async (data) => {
-      const message = data.toString().trim();
-      console.log("Data from Arduino:", message);
+      // Try to connect to Arduino
+      serialPort = new SerialPort({
+        path: ARDUINO_PORT,
+        baudRate: BAUD_RATE
+      });
       
-      // Process responses from Arduino
-      if (message.startsWith("SENSOR_STATUS:")) {
-        const status = message.split(":")[1].trim();
-        isSensorConnected = status === "CONNECTED";
-        sensorMessage = isSensorConnected ? "Sensor connected" : "Sensor not found";
-      }
-    });
-    
-    serialPort.on("error", async (error) => {
-      console.error("Arduino connection error:", error.message);
-      await storage.updateArduinoStatus(false, `Connection error: ${error.message}`);
-      isSensorConnected = false;
-      sensorMessage = "Connection error";
-    });
-    
-    serialPort.on("close", async () => {
-      console.log("Arduino connection closed");
-      await storage.updateArduinoStatus(false, "Connection closed");
-      isSensorConnected = false;
-      sensorMessage = "Connection closed";
-    });
-    */
+      // Setup event handlers
+      serialPort.on("open", async () => {
+        console.log("Arduino connected on port:", ARDUINO_PORT);
+        await storage.updateArduinoStatus(true, `Connected on port ${ARDUINO_PORT}`);
+        
+        // Send initial command to check if fingerprint sensor is connected
+        sendArduinoCommand("CHECK_SENSOR");
+      });
+      
+      serialPort.on("data", async (data) => {
+        const message = data.toString().trim();
+        console.log("Data from Arduino:", message);
+        
+        // Process responses from Arduino
+        handleArduinoResponse(message);
+      });
+      
+      serialPort.on("error", async (error) => {
+        console.error("Arduino connection error:", error.message);
+        await storage.updateArduinoStatus(false, `Connection error: ${error.message}`);
+        isSensorConnected = false;
+        sensorMessage = "Connection error";
+      });
+      
+      serialPort.on("close", async () => {
+        console.log("Arduino connection closed");
+        await storage.updateArduinoStatus(false, "Connection closed");
+        isSensorConnected = false;
+        sensorMessage = "Connection closed";
+      });
+    } else {
+      // Fallback to simulation
+      console.log("Using simulated Arduino connection");
+      await storage.updateArduinoStatus(true, "Simulated Arduino connection");
+      isSensorConnected = true;
+      sensorMessage = "Simulated sensor connected";
+    }
   } catch (error) {
     console.error("Failed to setup Arduino connection:", error);
     await storage.updateArduinoStatus(false, `Setup error: ${(error as Error).message}`);
     isSensorConnected = false;
     sensorMessage = "Setup error";
   }
+}
+
+function handleArduinoResponse(message: string) {
+  // Handle common responses
+  if (message.startsWith("SENSOR_STATUS:")) {
+    const status = message.split(":")[1].trim();
+    isSensorConnected = status === "CONNECTED";
+    sensorMessage = isSensorConnected ? "Sensor connected" : "Sensor not found";
+    return;
+  }
+  
+  // Check if there are any registered handlers for this message prefix
+  for (const [prefix, handler] of arduinoResponseHandlers.entries()) {
+    if (message.startsWith(prefix)) {
+      handler(message);
+      return;
+    }
+  }
+  
+  // Unknown response
+  console.log("Unhandled Arduino message:", message);
 }
 
 // Get the current status of the Arduino and fingerprint sensor
@@ -85,52 +102,145 @@ export async function getArduinoStatus(): Promise<{
   isSensorConnected: boolean;
   sensorMessage: string;
 }> {
-  // Always return simulated status in Replit environment
-  // In a real-world scenario, this would check the actual hardware
-  return {
-    isConnected: true,
-    message: "Simulated Arduino connection",
-    isSensorConnected: true,
-    sensorMessage: "Simulated sensor connected"
-  };
+  if (process.env.USE_REAL_ARDUINO === "true" && serialPort && serialPort.isOpen) {
+    return {
+      isConnected: true,
+      message: `Connected on port ${ARDUINO_PORT}`,
+      isSensorConnected,
+      sensorMessage
+    };
+  } else {
+    // Return simulated status
+    return {
+      isConnected: true,
+      message: "Simulated Arduino connection",
+      isSensorConnected: true,
+      sensorMessage: "Simulated sensor connected"
+    };
+  }
 }
 
 // Send a command to the Arduino
 export async function sendArduinoCommand(command: string): Promise<boolean> {
-  // In Replit environment, we'll simulate successful Arduino communication
-  console.log(`Simulating Arduino command: ${command}`);
-  return true;
-  
-  /* In a real-world scenario with physical Arduino:
-  if (!serialPort || !serialPort.isOpen) {
-    console.error("Cannot send command - Arduino not connected");
-    return false;
-  }
-  
-  try {
-    serialPort.write(`${command}\n`);
+  if (process.env.USE_REAL_ARDUINO === "true" && serialPort && serialPort.isOpen) {
+    try {
+      serialPort.write(`${command}\n`);
+      return true;
+    } catch (error) {
+      console.error("Error sending command to Arduino:", error);
+      return false;
+    }
+  } else {
+    // Simulate Arduino communication
+    console.log(`Simulating Arduino command: ${command}`);
     return true;
-  } catch (error) {
-    console.error("Error sending command to Arduino:", error);
-    return false;
   }
-  */
 }
 
 // Clean up and disconnect
 export async function disconnectArduino(): Promise<void> {
-  console.log("Simulating Arduino disconnection");
-  
-  /* In a real-world scenario with physical Arduino:
-  if (serialPort && serialPort.isOpen) {
+  if (process.env.USE_REAL_ARDUINO === "true" && serialPort && serialPort.isOpen) {
     serialPort.close();
+    await storage.updateArduinoStatus(false, "Disconnected");
+  } else {
+    console.log("Simulating Arduino disconnection");
   }
-  await storage.updateArduinoStatus(false, "Disconnected");
-  */
+}
+
+// Register a fingerprint and get a fingerprint ID
+export async function registerFingerprintAndGetId(userId: number): Promise<number> {
+  if (process.env.USE_REAL_ARDUINO === "true") {
+    return new Promise((resolve, reject) => {
+      // Find next available ID
+      storage.getNextAvailableFingerprintId().then(nextId => {
+        console.log(`Attempting to register fingerprint with ID ${nextId}`);
+        
+        // Register handler for the enrollment response
+        arduinoResponseHandlers.set("ENROLL", (response) => {
+          if (response.includes("SUCCESS")) {
+            const parts = response.split(":");
+            if (parts.length === 3) {
+              const fingerprintId = parseInt(parts[2]);
+              console.log(`Successfully registered fingerprint with ID ${fingerprintId}`);
+              
+              // Remove the handler once done
+              arduinoResponseHandlers.delete("ENROLL");
+              resolve(fingerprintId);
+            } else {
+              reject(new Error("Invalid response format from Arduino"));
+            }
+          } else if (response.includes("ERROR")) {
+            console.error(`Fingerprint registration error: ${response}`);
+            
+            // Remove the handler once done
+            arduinoResponseHandlers.delete("ENROLL");
+            reject(new Error(`Enrollment failed: ${response}`));
+          }
+        });
+        
+        // Send the enrollment command
+        sendArduinoCommand(`ENROLL:${nextId}`);
+      });
+    });
+  } else {
+    // Simulate a fingerprint registration
+    console.log("Simulating fingerprint registration");
+    // Get the next available ID from storage
+    const nextId = await storage.getNextAvailableFingerprintId();
+    return nextId;
+  }
+}
+
+// Verify a fingerprint and get the matching ID
+export async function verifyFingerprintAndGetId(): Promise<number | null> {
+  if (process.env.USE_REAL_ARDUINO === "true") {
+    return new Promise((resolve, reject) => {
+      // Register handler for the verification response
+      arduinoResponseHandlers.set("VERIFY", (response) => {
+        if (response.includes("MATCH")) {
+          const parts = response.split(":");
+          if (parts.length === 3) {
+            const fingerprintId = parseInt(parts[2]);
+            console.log(`Successfully verified fingerprint with ID ${fingerprintId}`);
+            
+            // Remove the handler once done
+            arduinoResponseHandlers.delete("VERIFY");
+            resolve(fingerprintId);
+          } else {
+            reject(new Error("Invalid response format from Arduino"));
+          }
+        } else if (response.includes("NO_MATCH")) {
+          console.log("No matching fingerprint found");
+          
+          // Remove the handler once done
+          arduinoResponseHandlers.delete("VERIFY");
+          resolve(null); // No match
+        } else if (response.includes("ERROR")) {
+          console.error(`Fingerprint verification error: ${response}`);
+          
+          // Remove the handler once done
+          arduinoResponseHandlers.delete("VERIFY");
+          reject(new Error(`Verification failed: ${response}`));
+        }
+      });
+      
+      // Send the verification command
+      sendArduinoCommand("VERIFY");
+    });
+  } else {
+    // Simulate a verification
+    console.log("Simulating fingerprint verification");
+    
+    // For simulation, let's say we match the first fingerprint
+    // In a real app, we'd have a mock map of userIds to fingerprintIds
+    const fingerprintId = 1;
+    
+    return fingerprintId;
+  }
 }
 
 /*
- * Arduino Sketch (Upload this to Arduino Uno)
+ * Arduino Sketch for R307 Fingerprint Sensor (Upload this to Arduino Uno)
  * 
  * #include <Adafruit_Fingerprint.h>
  * #include <SoftwareSerial.h>
@@ -144,6 +254,7 @@ export async function disconnectArduino(): Promise<void> {
  * 
  * // Command buffer
  * String command = "";
+ * String param = "";
  * 
  * void setup() {
  *   // Start communication with the computer
@@ -164,15 +275,39 @@ export async function disconnectArduino(): Promise<void> {
  * void loop() {
  *   // Check for commands from the server
  *   if (Serial.available()) {
- *     command = Serial.readStringUntil('\n');
- *     command.trim();
+ *     String fullCommand = Serial.readStringUntil('\n');
+ *     fullCommand.trim();
+ *     
+ *     // Parse command and parameter (if any)
+ *     int separatorIndex = fullCommand.indexOf(':');
+ *     if (separatorIndex != -1) {
+ *       command = fullCommand.substring(0, separatorIndex);
+ *       param = fullCommand.substring(separatorIndex + 1);
+ *     } else {
+ *       command = fullCommand;
+ *       param = "";
+ *     }
  *     
  *     if (command == "CHECK_SENSOR") {
  *       checkSensor();
  *     } else if (command == "ENROLL") {
- *       enrollFingerprint();
+ *       int id = param.toInt();
+ *       if (id > 0) {
+ *         enrollFingerprint(id);
+ *       } else {
+ *         Serial.println("ENROLL:ERROR:INVALID_ID");
+ *       }
  *     } else if (command == "VERIFY") {
  *       verifyFingerprint();
+ *     } else if (command == "DELETE") {
+ *       int id = param.toInt();
+ *       if (id > 0) {
+ *         deleteFingerprint(id);
+ *       } else {
+ *         Serial.println("DELETE:ERROR:INVALID_ID");
+ *       }
+ *     } else if (command == "GET_COUNT") {
+ *       getTemplateCount();
  *     }
  *   }
  * }
@@ -185,7 +320,17 @@ export async function disconnectArduino(): Promise<void> {
  *   }
  * }
  * 
- * void enrollFingerprint() {
+ * void getTemplateCount() {
+ *   uint8_t p = finger.getTemplateCount();
+ *   if (p == FINGERPRINT_OK) {
+ *     Serial.print("TEMPLATE_COUNT:");
+ *     Serial.println(finger.templateCount);
+ *   } else {
+ *     Serial.println("TEMPLATE_COUNT:ERROR");
+ *   }
+ * }
+ * 
+ * void enrollFingerprint(int id) {
  *   Serial.println("ENROLL:PLACE_FINGER");
  *   
  *   // Wait until a finger is detected
@@ -237,14 +382,16 @@ export async function disconnectArduino(): Promise<void> {
  *     return;
  *   }
  *   
- *   // Store model
- *   p = finger.storeModel(1); // ID #1
+ *   // Store model in the specified ID
+ *   p = finger.storeModel(id);
  *   if (p != FINGERPRINT_OK) {
  *     Serial.println("ENROLL:ERROR_STORE");
  *     return;
  *   }
  *   
- *   Serial.println("ENROLL:SUCCESS");
+ *   // Return success along with the ID
+ *   Serial.print("ENROLL:SUCCESS:");
+ *   Serial.println(id);
  * }
  * 
  * void verifyFingerprint() {
@@ -266,9 +413,21 @@ export async function disconnectArduino(): Promise<void> {
  *   // Search for a matching fingerprint
  *   p = finger.fingerFastSearch();
  *   if (p == FINGERPRINT_OK) {
- *     Serial.println("VERIFY:MATCH");
+ *     // Return the matched fingerprint ID
+ *     Serial.print("VERIFY:MATCH:");
+ *     Serial.println(finger.fingerID);
  *   } else {
  *     Serial.println("VERIFY:NO_MATCH");
+ *   }
+ * }
+ * 
+ * void deleteFingerprint(int id) {
+ *   uint8_t p = finger.deleteModel(id);
+ *   if (p == FINGERPRINT_OK) {
+ *     Serial.print("DELETE:SUCCESS:");
+ *     Serial.println(id);
+ *   } else {
+ *     Serial.println("DELETE:ERROR");
  *   }
  * }
  */

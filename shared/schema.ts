@@ -52,7 +52,8 @@ export const votes = pgTable("votes", {
 export const fingerprints = pgTable("fingerprints", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull().unique(),
-  templateData: text("template_data").notNull(), // Encoded fingerprint template
+  fingerprintId: integer("fingerprint_id").notNull(), // Actual ID used by the fingerprint sensor
+  templateData: text("template_data"), // Deprecated - kept for backward compatibility
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
