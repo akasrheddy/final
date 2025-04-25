@@ -1,0 +1,158 @@
+ npx drizzle-kit generate
+>> npm run db:push
+>> npm run db:seed
+No config path provided, using default 'drizzle.config.ts'
+Reading config file 'C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\drizzle.config.ts'
+DATABASE_URL, ensure the database is provisioned
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push --force --config=./drizzle.config.ts
+
+Reading config file 'C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\drizzle.config.ts'
+DATABASE_URL, ensure the database is provisioned
+
+> rest-express@1.0.0 db:seed
+> tsx db/seed.ts
+
+C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\db\index.ts:10
+  throw new Error(
+        ^
+
+
+Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at <anonymous> (C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\db\index.ts:10:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:271:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:578:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:116:5)
+
+Node.js v22.14.0
+PS C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting> npx drizzle-kit generate
+>> npm run db:push
+>> npm run db:seed
+No config path provided, using default 'drizzle.config.ts'
+Reading config file 'C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\drizzle.config.ts'
+6 tables
+arduino_status 5 columns 0 indexes 0 fks
+blocks 8 columns 0 indexes 0 fks
+candidates 6 columns 0 indexes 0 fks
+fingerprints 5 columns 0 indexes 1 fks
+users 8 columns 0 indexes 0 fks
+votes 7 columns 0 indexes 3 fks
+
+[✓] Your SQL migration file ➜ db\migrations\0000_misty_amphibian.sql 🚀
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push --force --config=./drizzle.config.ts
+
+Reading config file 'C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+
+ Warning  You are about to execute current statements:
+
+CREATE TABLE IF NOT EXISTS "arduino_status" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "is_connected" boolean DEFAULT false,
+        "last_checked_at" timestamp DEFAULT now() NOT NULL,
+        "message" text,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "blocks" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "index" integer NOT NULL,
+        "timestamp" timestamp DEFAULT now() NOT NULL,
+        "data" jsonb NOT NULL,
+        "previous_hash" text NOT NULL,
+        "hash" text NOT NULL,
+        "nonce" integer NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        CONSTRAINT "blocks_index_unique" UNIQUE("index"),
+        CONSTRAINT "blocks_hash_unique" UNIQUE("hash")
+);
+
+CREATE TABLE IF NOT EXISTS "candidates" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "name" text NOT NULL,
+        "party" text NOT NULL,
+        "description" text NOT NULL,
+        "image_url" text,
+        "created_at" timestamp DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "fingerprints" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "user_id" integer NOT NULL,
+        "fingerprint_id" integer NOT NULL,
+        "template_data" text,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        CONSTRAINT "fingerprints_user_id_unique" UNIQUE("user_id")
+);
+
+CREATE TABLE IF NOT EXISTS "users" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "username" text NOT NULL,
+        "password" text NOT NULL,
+        "voter_id" text NOT NULL,
+        "phone" text,
+        "has_fingerprint" boolean DEFAULT false,
+        "has_voted" boolean DEFAULT false,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        CONSTRAINT "users_username_unique" UNIQUE("username"),
+        CONSTRAINT "users_voter_id_unique" UNIQUE("voter_id")
+);
+
+CREATE TABLE IF NOT EXISTS "votes" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "user_id" integer NOT NULL,
+        "candidate_id" integer NOT NULL,
+        "block_id" integer NOT NULL,
+        "transaction_id" text NOT NULL,
+        "timestamp" timestamp DEFAULT now() NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        CONSTRAINT "votes_transaction_id_unique" UNIQUE("transaction_id")
+);
+
+DO $$ BEGIN
+ ALTER TABLE "fingerprints" ADD CONSTRAINT "fingerprints_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "votes" ADD CONSTRAINT "votes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "votes" ADD CONSTRAINT "votes_candidate_id_candidates_id_fk" FOREIGN KEY ("candidate_id") REFERENCES "public"."candidates"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "votes" ADD CONSTRAINT "votes_block_id_blocks_id_fk" FOREIGN KEY ("block_id") REFERENCES "public"."blocks"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+
+[✓] Changes applied
+
+> rest-express@1.0.0 db:seed
+> tsx db/seed.ts
+
+C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\db\index.ts:10
+  throw new Error(
+        ^
+
+
+Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at <anonymous> (C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\db\index.ts:10:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:271:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:578:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:116:5)
+
+Node.js v22.14.0
+PS C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting> 

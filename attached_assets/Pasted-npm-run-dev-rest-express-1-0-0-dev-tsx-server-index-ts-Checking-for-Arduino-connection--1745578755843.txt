@@ -1,0 +1,133 @@
+npm run dev
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Checking for Arduino connection...
+Attempting to connect to real Arduino
+Available ports: [
+  {
+    path: 'COM8',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\7&25B9BECC&4&FC58FA08B93C_C00000000',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM8)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM9',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_VID&000105D6_PID&000A\\7&25B9BECC&4&ED0A4B71B171_C00000000',        
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM9)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM11',
+    manufacturer: 'wch.cn',
+    serialNumber: '5&217201AA&0&1',
+    pnpId: 'USB\\VID_1A86&PID_7523\\5&217201AA&0&1',
+    locationId: 'Port_#0001.Hub_#0002',
+    friendlyName: 'USB-SERIAL CH340 (COM11)',
+    vendorId: '1A86',
+    productId: '7523'
+  },
+  {
+    path: 'COM3',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\7&25B9BECC&4&000000000000_00000000',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM3)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM4',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\7&25B9BECC&4&000000000000_00000001',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM4)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM5',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\7&25B9BECC&4&000000000000_00000002',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM5)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM10',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\7&25B9BECC&4&000000000000_00000003',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM10)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM7',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\7&25B9BECC&4&9B551612D8AC_C00000000',
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM7)',
+    vendorId: undefined,
+    productId: undefined
+  },
+  {
+    path: 'COM6',
+    manufacturer: 'Microsoft',
+    serialNumber: undefined,
+    pnpId: 'BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_VID&000105D6_PID&000A\\7&25B9BECC&4&74DBC2463290_C00000000',        
+    locationId: undefined,
+    friendlyName: 'Standard Serial over Bluetooth link (COM6)',
+    vendorId: undefined,
+    productId: undefined
+  }
+]
+Arduino connected on port: COM11
+Server running on port 3000
+Data from Arduino: SENSOR_STATUS:CONNECTED
+4:25:15 PM [express] GET /api/blockchain/status 304 in 227ms :: {"active":true,"blockCount":0,"lates…
+4:25:42 PM [express] GET /api/status 200 in 103ms :: {"arduino":{"connected":true,"message":"R307 co…
+4:25:47 PM [express] GET /api/blockchain/status 304 in 1936ms :: {"active":true,"blockCount":0,"late…
+4:25:50 PM [express] GET /api/status 304 in 4462ms :: {"arduino":{"connected":true,"message":"R307 c…
+4:26:17 PM [express] GET /api/blockchain/status 304 in 104ms :: {"active":true,"blockCount":0,"lates…
+4:26:48 PM [express] GET /api/blockchain/status 304 in 104ms :: {"active":true,"blockCount":0,"lates…
+4:27:11 PM [express] POST /api/admin/voters 201 in 111ms :: {"id":1,"username":"luvi","voterId":"V00…
+Attempting to register fingerprint with ID 1
+Data from Arduino: ENROLL:PLACE_FINGER
+Data from Arduino: ENROLL:IMAGE_TAKEN
+Data from Arduino: ENROLL:REMOVE_FINGER
+Data from Arduino: ENROLL:PLACE_AGAIN
+4:27:18 PM [express] GET /api/blockchain/status 304 in 17ms :: {"active":true,"blockCount":0,"latest…
+Data from Arduino: ENROLL:ERROR_TEMPLATE2
+Fingerprint registration error: ENROLL:ERROR_TEMPLATE2
+Error during fingerprint enrollment: Error: Enrollment failed: ENROLL:ERROR_TEMPLATE2
+    at <anonymous> (C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\server\arduino.ts:215:20)
+    at handleArduinoResponse (C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\server\arduino.ts:89:7)       
+    at SerialPort.<anonymous> (C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\server\arduino.ts:46:9)      
+    at SerialPort.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at C:\Users\G Goutham\OneDrive\Desktop\BiometricVoting\BiometricVoting\node_modules\@serialport\stream\dist\index.js:208:18 
+4:27:18 PM [express] POST /api/fingerprints/register 500 in 5306ms :: {"success":false,"message":"Er…
+Attempting to register fingerprint with ID 1
+Data from Arduino: ENROLL:PLACE_FINGER
+ENROLL:ERRO
+Data from Arduino: R_IMAGING
+Unhandled Arduino message: R_IMAGING
+4:27:48 PM [express] GET /api/blockchain/status 304 in 83ms :: {"active":true,"blockCount":0,"latest…
